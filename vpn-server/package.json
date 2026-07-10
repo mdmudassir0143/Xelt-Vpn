@@ -1,0 +1,24 @@
+{
+  "name": "xelt-server",
+  "version": "1.0.0",
+  "description": "Xelt x402 resource server on Arbitrum (USDC, Particle Universal Accounts)",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts",
+    "dev:fresh": "node scripts/free-port.mjs && tsx watch index.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^2.0.2",
+    "@particle-network/universal-account-sdk": "^2.0.3",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.19",
+    "viem": "^2.54.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "tsx": "^4.22.0",
+    "typescript": "^6.0.3"
+  }
+}

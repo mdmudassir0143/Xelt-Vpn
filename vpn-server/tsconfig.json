@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@particle-network/universal-account-sdk": [
+        "./node_modules/@particle-network/universal-account-sdk/dist/index.d.ts"
+      ]
+    }
+  },
+  "include": ["**/*.ts"]
+}
