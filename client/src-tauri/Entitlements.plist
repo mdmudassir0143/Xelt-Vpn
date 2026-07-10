@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Gives the WKWebView's WebCrypto master key (used by Magic) a stable keychain
+    access group tied to the app identity rather than the per-build code signature.
+    Any build signed with this same group can read the key, so rebuilding the dev
+    binary stops triggering the macOS keychain re-auth loop (errSecDuplicateItem -25299).
+  -->
+  <key>keychain-access-groups</key>
+  <array>
+    <string>com.xelt.app</string>
+  </array>
+</dict>
+</plist>
