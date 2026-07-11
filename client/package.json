@@ -1,0 +1,40 @@
+{
+  "name": "xelt",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:landing": "vite build --config vite.landing.config.ts",
+    "tauri": "tauri",
+    "sign:dev": "codesign --force --sign - --entitlements src-tauri/Entitlements.plist src-tauri/target/debug/xelt && echo '✅ signed dev binary with keychain entitlement'"
+  },
+  "dependencies": {
+    "@particle-network/universal-account-sdk": "^2.0.3",
+    "magic-sdk": "^33.9.0",
+    "viem": "^2.54.0",
+    "@tauri-apps/api": "2.10.1",
+    "@tauri-apps/plugin-shell": "2.3.5",
+    "@x402/core": "^2.17.0",
+    "@x402/fetch": "^2.17.0",
+    "buffer": "^6.0.3",
+    "framer-motion": "^11.18.2",
+    "process": "^0.11.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "util": "^0.12.5",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.10.1",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.0"
+  }
+}
