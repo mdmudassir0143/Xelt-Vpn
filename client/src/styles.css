@@ -1,0 +1,750 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Landing palette — paper / ink neo-brutalist */
+  --paper: #fafaf8;
+  --paper-2: #f0f0ec;
+  --ink: #0a0a0a;
+  --ink-soft: #3a3a38;
+  --ink-mute: #8a8a85;
+  --indigo: #5b5bff;
+  --pink: #ff4fcb;
+  --sun: #ffe600;
+  --sky: #00b3ff;
+  --ember: #ff7a00;
+  --green: #1bbf73;
+  --line: var(--ink);
+}
+
+html,
+body {
+  height: 100%;
+  background: transparent;
+}
+
+body {
+  color: var(--ink);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 12px;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* ── App shell ── */
+.app {
+  width: 300px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  /* Thin scrollbar (Firefox) */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(10, 10, 10, 0.25) transparent;
+}
+
+/* Thin scrollbar (WebKit/Chromium — the Tauri WebView) */
+.app::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app::-webkit-scrollbar-thumb {
+  background: rgba(10, 10, 10, 0.18);
+  border-radius: 3px;
+}
+
+.app::-webkit-scrollbar-thumb:hover {
+  background: rgba(10, 10, 10, 0.32);
+}
+
+/* subtle paper grain */
+.app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 0.5px);
+  background-size: 4px 4px;
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app > * {
+  position: relative;
+  z-index: 1;
+}
+
+.app.secured {
+  border-color: var(--ink);
+}
+
+/* ── Header (drag handle) ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 12px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+  cursor: grab;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.header:active {
+  cursor: grabbing;
+}
+
+/* ── Logo mark (matches landing nav) ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-badge {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.logo-dot-sun {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sun);
+}
+
+.logo-dot-pink {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink);
+}
+
+.logo-word {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+/* ── Status pill ── */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.status-pill.on {
+  background: var(--green);
+}
+
+.status-pill.err {
+  background: var(--ember);
+}
+
+.status-pill-text {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  flex-shrink: 0;
+}
+
+.status-pill.on .status-dot {
+  background: var(--ink);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.status-pill.err .status-dot {
+  background: var(--ink);
+}
+
+/* Warning state: session about to end (last 30s). Placed after .on so it wins. */
+.status-pill.warn {
+  background: var(--sun);
+  animation: warnPulse 1s ease-in-out infinite;
+}
+
+.status-pill.warn .status-dot {
+  background: var(--ink);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes warnPulse {
+  0%, 100% { background: var(--sun); }
+  50% { background: var(--ember); }
+}
+
+/* ── Card primitive (wallet + ip) ── */
+.wallet-bar,
+.ip-bar {
+  margin: 12px 14px 0;
+  padding: 11px 12px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.wallet-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wallet-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wallet-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--paper);
+  background: var(--indigo);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.wallet-addr {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.wallet-bal {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── IP bar ── */
+.ip-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ip-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ip-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ip-value.accent {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.ip-arrow {
+  color: var(--ink-mute);
+}
+
+/* ── Session/info bar ── */
+.connected-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px 2px;
+}
+
+.connected-ip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  color: var(--ink-soft);
+}
+
+.connected-ping {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  color: var(--ink-mute);
+}
+
+.session-timer {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+/* ── Session stat box (time left + expiry) ── */
+.session-box {
+  margin: 12px 14px 0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.session-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-cell-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.session-cell-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-cell-value.accent {
+  color: var(--indigo);
+}
+
+.session-cell-value.danger {
+  color: #e5333a;
+  /* Pulse the COLOR (not opacity) — opacity animation on per-second-changing
+     text leaves a cached ghost of the previous value in the WebView. */
+  animation: timerPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { color: #e5333a; }
+  50% { color: #ff8a8e; }
+}
+
+.session-divider {
+  width: 2px;
+  background: var(--ink);
+  opacity: 0.12;
+}
+
+/* ── Banners ── */
+.error-bar,
+.success-bar {
+  margin: 12px 14px 0;
+  padding: 9px 11px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-size: 10px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.error-bar {
+  background: var(--ember);
+  color: var(--ink);
+}
+
+.success-bar {
+  background: var(--sun);
+  color: var(--ink);
+}
+
+/* ── Secondary buttons ── */
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin: 12px 14px 0;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 9px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn-secondary.accent {
+  background: var(--indigo);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.btn-secondary.accent:hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--indigo);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Primary action ── */
+.btn-action {
+  margin: 14px;
+  padding: 14px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.06s ease;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn-action:hover:not(:disabled) {
+  background: var(--indigo);
+  border-color: var(--indigo);
+}
+
+.btn-action:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn-action.disconnect {
+  background: var(--ember);
+  color: var(--ink);
+}
+
+.btn-action.disconnect:hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ember);
+}
+
+.btn-action.loading {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: 2px 2px 0 var(--ink-mute);
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px 14px;
+  margin-top: auto;
+  border-top: 2px solid var(--ink);
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
+  z-index: 5;
+}
+
+.footer span {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  color: var(--ink-mute);
+  letter-spacing: 0.08em;
+}
+
+/* ── Renew modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-box {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 var(--ink);
+  padding: 18px;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-box h3 {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.modal-hint {
+  font-size: 10px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.modal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+.modal-label input {
+  padding: 9px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+}
+
+.modal-label input:focus {
+  outline: none;
+  border-color: var(--indigo);
+}
+
+.modal-price {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* ── Animations ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-pill.on .status-dot { animation: none; }
+}
+
+/* ── Account card (pre-connect: address + balance + funding status) ── */
+.acct-card {
+  margin: 12px 14px 0;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+  overflow: hidden;
+}
+
+.acct-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 11px;
+  background: var(--paper-2);
+  border-bottom: 2px solid var(--ink);
+}
+
+.acct-top-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* keep the label pill hugging its text, not stretched */
+  gap: 3px;
+  min-width: 0;
+}
+
+/* small pill label used inside the account card (hugs its own content) */
+.acct-label {
+  align-self: flex-start;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--indigo);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.acct-label.ink { background: var(--ink); }
+
+.acct-ico-row { display: flex; gap: 5px; flex-shrink: 0; }
+
+.acct-ico {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  background: var(--paper);
+  font-size: 11px;
+  cursor: pointer;
+}
+.acct-ico:hover { background: var(--sun); }
+
+.acct-bal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px 7px;
+}
+
+.acct-bal {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: 27px;
+  line-height: 0.85;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acct-bal-unit {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  margin-left: 5px;
+}
+
+.acct-status {
+  margin: 2px 12px 12px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 1.4;
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+}
+.acct-status.warn { background: #fff3d6; border: 1.5px solid var(--ember); }
+.acct-status.ok { background: #eeeeff; border: 1.5px solid var(--indigo); }
+.acct-status .em { font-size: 13px; line-height: 1; }
+.acct-status.warn .em { color: var(--ember); }
+.acct-status.ok .em { color: var(--indigo); }
+.acct-status.ok b { color: var(--indigo); }
+.acct-status b { font-weight: 700; }
+
+.mini-btn {
+  display: inline-block;
+  margin: 6px 6px 0 0;
+  padding: 3px 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  background: var(--paper);
+  cursor: pointer;
+}
+.mini-btn.sun { background: var(--sun); }
+.mini-btn:hover { box-shadow: 2px 2px 0 var(--ink); }
+
+/* offline chip beside the status pill when the payment server is unreachable */
+.offline-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  border: 1.5px solid var(--ember);
+  background: #fff3d6;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.offline-chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ember);
+}
