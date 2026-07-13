@@ -381,6 +381,27 @@ lsof -ti :4021 | xargs kill      # or: npm run dev:fresh
 
 ---
 
+## Why not the Coinbase x402 facilitator?
+
+Arbitrum One is a supported x402 network, and Coinbase's CDP facilitator can settle x402 payments on
+it. Xelt deliberately does not use it, for a concrete reason worth stating plainly.
+
+The canonical x402 `exact` scheme settles with **EIP 3009** `transferWithAuthorization` (Permit2 is
+the other option). Both verify the payer's signature **onchain**: if the payer has no code, USDC uses
+`ecrecover`; if the payer has code, USDC calls **EIP 1271** `isValidSignature` instead.
+
+Xelt's wallet is a Particle Universal Account upgraded in place via **EIP 7702**, so it **has code**.
+USDC therefore takes the EIP 1271 path, and the Particle delegate does not validate a plain ECDSA
+authorization: on Arbitrum mainnet the call reverts with `FiatTokenV2: invalid signature`, even
+though that same signature recovers correctly offchain. Permit2 fails the same way.
+
+So the facilitator needs a **plain EOA** payer, while this build needs an **EIP 7702** smart account.
+They cannot be the same account. Chain abstraction is the whole point of Xelt, so it keeps the
+Universal Account and settles each session through UA, then verifies the resulting USDC transfer
+onchain itself. Same HTTP 402 handshake, a settlement path that works with a 7702 account.
+
+---
+
 ## License
 
 Released under the MIT License.
