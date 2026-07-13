@@ -4,13 +4,13 @@
 
 **Pay as you go VPN. Buy privacy by the minute, settled in USDC on Arbitrum.**
 
-No account. No subscription. No card. Log in with an email, pay a few cents in USDC over the
-[x402](https://x402.org) payment protocol, and get an encrypted **WireGuard** tunnel for exactly
+No account. No subscription. No card. Log in with an email, pay a few cents in USDC over an
+HTTP 402 payment handshake, and get an encrypted **WireGuard** tunnel for exactly
 the minutes you bought.
 
 ![Arbitrum One](https://img.shields.io/badge/settles%20on-Arbitrum%20One-28A0F0?style=flat-square)
 ![USDC](https://img.shields.io/badge/paid%20in-USDC-2775CA?style=flat-square)
-![x402](https://img.shields.io/badge/protocol-x402-111111?style=flat-square)
+![HTTP 402](https://img.shields.io/badge/pay%20per%20use-HTTP%20402-111111?style=flat-square)
 ![WireGuard](https://img.shields.io/badge/tunnel-WireGuard-88171A?style=flat-square)
 ![Tauri](https://img.shields.io/badge/desktop-Tauri-FFC131?style=flat-square)
 ![License: MIT](https://img.shields.io/badge/license-MIT-3da638?style=flat-square)
@@ -35,13 +35,54 @@ Xelt strips that away:
 
 ## Live on Arbitrum
 
-Xelt is not a mock. **Every session is a real USDC payment on Arbitrum One**, and every one of them
-is public. Watch fares land in real time, or verify any past session yourself:
+Xelt is not a mock. **Every session is a real USDC payment on Arbitrum One**, driven by an HTTP 402
+payment handshake and settled onchain. All of it is public and verifiable.
+
+### The payment handshake
+
+Xelt gates each session behind HTTP `402 Payment Required`: the client pays, then retries with the
+receipt. Here is one real session, end to end.
+
+```http
+# step 1: client asks to connect, no payment yet
+POST /connect
+{ "wireguardPublicKey": "…", "durationMinutes": 1 }
+
+# server answers with the payment challenge (the requirements)
+HTTP/1.1 402 Payment Required
+{
+  "accepts": [{
+    "scheme":   "ua-arbitrum-usdc",
+    "network":  "eip155:42161",
+    "payTo":    "0x3d2b05eE2457B174DE4dC53e714db52B1F8B4573",
+    "asset":    "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "amount":   "0.02",
+    "currency": "USDC"
+  }]
+}
+
+# step 2: the wallet settles 0.02 USDC to payTo on Arbitrum  (the tx below)
+
+# step 3: client retries the SAME request, carrying the receipt
+POST /connect
+X-PAYMENT: base64({ "scheme":"ua", "txHashes":["0xa20a69…c836c0"], "payerAddress":"0xC954…2FBC" })
+{ "wireguardPublicKey": "…", "durationMinutes": 1 }
+
+# server verifies that USDC Transfer on Arbitrum (payTo + amount) and opens the tunnel
+HTTP/1.1 200 OK
+{ "server_public_key": "…", "assigned_ip": "10.x.x.x", "expiresAt": "…" }
+```
+
+The `payTo`, `asset`, and `amount` in the `402` are exactly what lands onchain. That binding of
+challenge, settlement, and redemption is the payment. (The `402` advertises a custom
+`ua-arbitrum-usdc` settlement scheme, which the server verifies against the onchain transfer.)
+
+### Onchain settlements
+
+Verify any of it yourself:
 
 - **Treasury** (receives every payment): [`0x3d2b05…8B4573`](https://arbiscan.io/address/0x3d2b05eE2457B174DE4dC53e714db52B1F8B4573)
 - **Asset** (USDC on Arbitrum): [`0xaf88d0…8e5831`](https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831)
-
-Recent settlements, straight from the chain:
 
 | Amount | Date | Transaction |
 |--------|------|-------------|
@@ -50,16 +91,50 @@ Recent settlements, straight from the chain:
 | 0.02 USDC | Jul&nbsp;9,&nbsp;2026 | [`0xc986c7…582cd3`](https://arbiscan.io/tx/0xc986c7e65dec49b8f3d89285716c5037b4104fed8da886298c18fcf71c582cd3) |
 | 0.02 USDC | Jul&nbsp;9,&nbsp;2026 | [`0xa7f5cf…a2276b`](https://arbiscan.io/tx/0xa7f5cf7aa6e810bd8c62c1476d1417d0e497ddf0e59c5f28a2597f6fb6a2276b) |
 
-Each row is one paid minute: a real USDC transfer from a Magic wallet to the Xelt treasury, which
-unlocked a WireGuard tunnel. The server never trusts the client or an indexer; it re reads the USDC
-`Transfer` log on Arbitrum and checks `to` and `amount` before opening the tunnel.
+The top row is the settlement from the handshake above. Each row is one paid minute: a real USDC
+transfer from a Magic wallet to the Xelt treasury that unlocked a WireGuard tunnel. The server never
+trusts the client or an indexer; it re reads the USDC `Transfer` log on Arbitrum and checks `to` and
+`amount` before opening the tunnel.
+
+---
+
+## Chain abstracted with EIP 7702
+
+Magic gives each user an ordinary EOA at sign in. Particle Universal Accounts then upgrades **that
+same EOA in place** with EIP 7702: no new address, no smart account to deploy, no migration. One
+login, one balance, and the wallet can spend on any chain with any asset.
+
+The upgrade is visible onchain. The login wallet keeps its address but now runs a 7702 delegation
+that points at Particle's Universal Accounts implementation:
+
+```
+login wallet   0xC954cb30C3423a0f73Fdd89afD47057168482FBC   (address never changes)
+onchain code   0xef010013e00e089f81ad9f36b655c9e9a07c6bf1489a5a
+```
+
+`0xef0100` is the EIP 7702 delegation marker; the rest, `0x13e00e089f81ad9f36b655c9e9a07c6bf1489a5a`,
+is the Particle UA implementation the wallet now delegates to. Verify it:
+[wallet on Arbiscan](https://arbiscan.io/address/0xC954cb30C3423a0f73Fdd89afD47057168482FBC) ·
+[UA implementation](https://arbiscan.io/address/0x13e00e089f81ad9f36b655c9e9a07c6bf1489a5a). For
+contrast, the treasury in the settlements above is a plain EOA with no code.
+
+Because the wallet is now a Universal Account, one balance spans chains:
+
+- **Recharge (any chain → Arbitrum)** is a single UA operation that pulls USDC from wherever you hold
+  it and settles it on Arbitrum. Value moves across chains with no bridge screen and no gas token to
+  top up.
+- **Per use payments** settle on Arbitrum and can draw from a balance you hold on another chain, so a
+  session can be paid without holding anything on Arbitrum first.
+
+A genuinely cross chain settlement leaves a linked pair of transactions, one on the origin chain and
+one on Arbitrum: one login, one balance, value delivered where the service asks for it.
 
 ---
 
 ## How it works
 
 The client logs you in with Magic, spins up a Particle Universal Account over your wallet
-(EIP&nbsp;7702), and settles each session in USDC on Arbitrum. The server speaks x402: it answers an
+(EIP&nbsp;7702), and settles each session in USDC on Arbitrum. The server gates each session behind HTTP 402: it answers an
 unpaid request with `402` plus a price, then verifies the **onchain USDC transfer** before opening
 the tunnel.
 
@@ -142,8 +217,8 @@ never need to hold ETH). Pricing defaults to `$0.02` per minute (`PRICE_PER_MINU
 
 | Method · path | Auth | Purpose |
 |---------------|------|---------|
-| `POST /connect` | x402 (`402` → pay → retry) | Buy a new session |
-| `POST /renew` | x402 | Extend the active session (last 30s before expiry) |
+| `POST /connect` | HTTP 402 (`402` → pay → retry) | Buy a new session |
+| `POST /renew` | HTTP 402 | Extend the active session (last 30s before expiry) |
 | `POST /session/clear` | free | Drop the session and WireGuard peer |
 | `GET /pricing?durationMinutes=N` | free | Quote a price |
 | `GET /session/:wireguardPublicKey` | free | Session status and seconds remaining |
@@ -156,7 +231,7 @@ never need to hold ETH). Pricing defaults to `$0.02` per minute (`PRICE_PER_MINU
 | Login and wallet | Magic (email OTP embedded wallet) |
 | Payments | Particle Universal Accounts (EIP 7702), chain abstracted USDC settlement |
 | Settlement | Arbitrum One, USDC |
-| Protocol | x402 (HTTP 402 challenge and response) |
+| Protocol | HTTP 402 pay per use (challenge, pay, retry) |
 | Tunnel | WireGuard (boringtun) |
 | App | Tauri (Rust and WebView) |
 
@@ -172,11 +247,11 @@ xelt/
 │   │   ├── ua.ts                    #     Universal Accounts: balance, recharge, payExternal
 │   │   ├── config.ts                #     Arbitrum / USDC / Magic + Particle keys
 │   │   └── index.ts                 #     public wallet API
-│   ├── src/utils/vpnFlow.ts         #   x402 connect/renew (402 → UA settle → verify → tunnel)
+│   ├── src/utils/vpnFlow.ts         #   pay per use connect/renew (402 → UA settle → verify → tunnel)
 │   ├── src/App.tsx                  #   UI: login, balance, recharge, buy/renew minutes
 │   ├── src/landing/                 #   marketing landing page
 │   └── src-tauri/                   #   Rust: WireGuard tunnel control + key storage
-├── vpn-server/                      # x402 resource server (Hono)
+├── vpn-server/                      # pay per use resource server (Hono)
 │   ├── index.ts                     #   402 gate + payment verify + peer registration
 │   └── services/paymentVerify.ts    #   onchain USDC Transfer verification (Arbitrum RPC)
 ├── protocol/boringtun/              # WireGuard server (Rust, chain agnostic)
@@ -207,7 +282,7 @@ sudo WG_SUDO=1 BT_PAYMENT_SERVER=0 BT_REGISTRATION_API=1 \
 # verify:  curl http://127.0.0.1:8080/health
 ```
 
-**Terminal 2 · x402 payment server**
+**Terminal 2 · payment server**
 
 ```bash
 cd vpn-server
@@ -242,7 +317,7 @@ pick minutes, and the tunnel comes up. ✅
 
 | Env var | Meaning |
 |---------|---------|
-| `PORT` | x402 API port (default `4021`). |
+| `PORT` | payment API port (default `4021`). |
 | `BORINGTUN_API_URL` | boringtun registration API (`http://127.0.0.1:8080`). |
 | `ARB_CHAIN_ID` | Arbitrum One chain id (`42161`). |
 | `ARB_USDC_ADDRESS` | USDC on Arbitrum (`0xaf88d065e77c8cC2239327C5EDb3A432268e5831`). |
@@ -256,7 +331,7 @@ pick minutes, and the tunnel comes up. ✅
 | Env var | Meaning |
 |---------|---------|
 | `VITE_SERVER_IP` | vpn-server host (`127.0.0.1` for same machine dev). |
-| `VITE_X402_API_URL` | x402 API base (optional override, `http://localhost:4021`). |
+| `VITE_X402_API_URL` | payment API base (optional override, `http://localhost:4021`). |
 | `VITE_MAGIC_PK` | Magic publishable key (`pk_live_…`). |
 | `VITE_PARTICLE_PROJECT_ID` / `VITE_PARTICLE_CLIENT_KEY` / `VITE_PARTICLE_APP_ID` | Particle client keys. |
 | `VITE_ARB_CHAIN_ID` / `VITE_ARBITRUM_RPC` / `VITE_ARB_USDC_ADDRESS` | Arbitrum settlement (defaults baked into `config.ts`). |
@@ -268,7 +343,7 @@ pick minutes, and the tunnel comes up. ✅
 
 | Port | Service |
 |------|---------|
-| `4021` | x402 payment API |
+| `4021` | payment API |
 | `8080` | boringtun peer registration |
 | `51820/udp` | WireGuard |
 | `1420` | client (Vite dev server) |
