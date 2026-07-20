@@ -144,6 +144,12 @@ function paymentGate(route: 'connect' | 'renew') {
     if (xPayment) {
       try { proof = JSON.parse(Buffer.from(xPayment, 'base64').toString('utf8')); } catch { /* ignore */ }
     }
+    // Ensure the VPN backend (boringtun) is up AND is really boringtun BEFORE issuing a payment
+    // challenge. If we only checked after payment, a down or misconfigured backend (e.g. another
+    // service squatting boringtun's port) would let the user be charged with no tunnel to show.
+    const bt = await probeBoringtunHealth();
+    if (!bt.ok) return c.json({ error: bt.message ?? 'VPN backend unavailable' }, 503);
+
     const hasPayment = !!(proof.transactionId || body.transactionId);
 
     if (!hasPayment) {
@@ -154,10 +160,6 @@ function paymentGate(route: 'connect' | 'renew') {
         message: `Pay $${amountUsd} USDC to ${PAYEE} on Arbitrum for ${minutes} min, then retry with the payment in an X-PAYMENT header.`,
       }, 402);
     }
-
-    // Paid path: ensure the VPN backend is up before we verify + register.
-    const bt = await probeBoringtunHealth();
-    if (!bt.ok) return c.json({ error: bt.message ?? 'VPN backend unavailable' }, 503);
 
     // Verify the UA settlement by its on-chain USDC Transfer to the payee (txHashes) — robust
     // to Particle's indexing lag. transactionId is kept for reference/logging.
