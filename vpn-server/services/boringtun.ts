@@ -67,10 +67,23 @@ export async function probeBoringtunHealth(timeoutMs = 2000): Promise<{
   try {
     // boringtun exposes GET /health (no peer registration side-effects / log noise).
     const res = await fetch(`${url}/health`, { signal: controller.signal });
-    if (res.ok) {
-      return { ok: true, url, message: 'boringtun reachable' };
+    if (!res.ok) {
+      return { ok: false, url, message: `boringtun returned ${res.status}` };
     }
-    return { ok: false, url, message: `boringtun returned ${res.status}` };
+    // A 200 is NOT enough: another service may be squatting this port (e.g. a Docker container)
+    // and returning HTML. boringtun always responds application/json, so require that. Otherwise
+    // this passes the pre-payment gate and the user gets charged for a tunnel that can't be made.
+    const ctype = res.headers.get('content-type') || '';
+    if (!ctype.includes('application/json')) {
+      return {
+        ok: false,
+        url,
+        message:
+          `${url} answered but is not the boringtun API (content-type "${ctype || 'unknown'}"). ` +
+          'Another service is likely using this port. Free it, or point BORINGTUN_API_URL at boringtun.',
+      };
+    }
+    return { ok: true, url, message: 'boringtun reachable' };
   } catch (err) {
     return { ok: false, url, message: formatBoringtunError(err, url) };
   } finally {
@@ -98,7 +111,16 @@ export async function registerWireGuardPeer(
     throw new Error(`boringtun register failed (${res.status}): ${text}`);
   }
 
-  const data = JSON.parse(text) as BoringtunRegisterResponse;
+  let data: BoringtunRegisterResponse;
+  try {
+    data = JSON.parse(text) as BoringtunRegisterResponse;
+  } catch {
+    const ctype = res.headers.get('content-type') || 'unknown';
+    throw new Error(
+      `boringtun register got a non-JSON response from ${url} (content-type "${ctype}"). ` +
+      'Another service is likely using this port instead of boringtun.'
+    );
+  }
   if (!data.server_public_key || !data.assigned_ip || !data.endpoint) {
     throw new Error(`boringtun register incomplete response: ${text}`);
   }
