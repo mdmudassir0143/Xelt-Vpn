@@ -8,10 +8,13 @@ import { resolve } from 'path';
 // The app entry pulls in the wallet SDKs (Magic, Particle Universal Accounts, viem)
 // plus wasm and node polyfills that a static host does not need. The landing page
 // imports none of that, so this config builds just landing.html for a clean,
-// lightweight deploy. Used for Vercel.
+// lightweight deploy. Works on GitHub Pages and Vercel.
 //
-// Output is dist/landing.html; vercel.json rewrites "/" to "/landing.html".
+// `base: './'` keeps asset paths relative, so it serves correctly both at a domain root (Vercel)
+// and from a GitHub Pages project subpath (user.github.io/repo/). The build emits dist/landing.html;
+// GitHub Pages serves index.html at the root, so the Pages workflow copies landing.html to index.html.
 export default defineConfig({
+  base: './',
   plugins: [react()],
   define: { global: 'globalThis' },
   build: {

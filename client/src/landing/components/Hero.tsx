@@ -63,8 +63,12 @@ export function Hero() {
             transition={{ delay: 0.72, duration: 0.7 }}
             className="mt-9 flex flex-wrap items-center gap-3"
           >
-            <MagneticButton variant="solid" icon={<Arrow />}>
-              Get the app
+            <MagneticButton
+              variant="solid"
+              icon={<Arrow />}
+              onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Join waitlist
             </MagneticButton>
             <MagneticButton variant="outline">How it works</MagneticButton>
           </motion.div>

@@ -32,8 +32,12 @@ export function CTA() {
           your first encrypted minute gasless. No password to remember.
         </RevealItem>
         <RevealItem className="mt-9 flex flex-wrap justify-center gap-3">
-          <MagneticButton variant="solid" icon={<Arrow />}>
-            Get the app
+          <MagneticButton
+            variant="solid"
+            icon={<Arrow />}
+            onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            Join waitlist
           </MagneticButton>
           <MagneticButton variant="outline">Read the docs</MagneticButton>
         </RevealItem>

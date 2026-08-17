@@ -42,8 +42,9 @@ export function Nav() {
           variant="solid"
           className="!px-5 !py-2.5 !text-[13px]"
           icon={<Arrow />}
+          onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
         >
-          Get the app
+          Join waitlist
         </MagneticButton>
       </nav>
     </motion.header>

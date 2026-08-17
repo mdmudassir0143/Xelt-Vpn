@@ -5,6 +5,7 @@ import { Flow } from './components/Flow';
 import { Features } from './components/Features';
 import { Stats } from './components/Stats';
 import { CodeShowcase } from './components/CodeShowcase';
+import { Waitlist } from './components/Waitlist';
 import { CTA, Footer } from './components/Closing';
 
 export function Landing() {
@@ -24,7 +25,8 @@ export function Landing() {
         <Features />
         <Stats />
         <CodeShowcase />
-        <CTA />
+        {/* <CTA /> */}
+        <Waitlist />
       </main>
       <Footer />
     </div>
