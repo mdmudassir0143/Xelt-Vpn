@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/", "destination": "/landing.html" },
-    { "source": "/xelt-receipt", "destination": "/xelt-receipt.html" }
+    { "source": "/xelt-receipt", "destination": "/xelt-receipt.html" },
+    { "source": "/admin", "destination": "/admin.html" }
   ]
 }

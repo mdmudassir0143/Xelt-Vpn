@@ -25,6 +25,7 @@ export default defineConfig({
       input: {
         landing: resolve(__dirname, 'landing.html'),
         receipt: resolve(__dirname, 'xelt-receipt.html'),
+        admin: resolve(__dirname, 'admin.html'),
       },
     },
   },
