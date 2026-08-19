@@ -26,6 +26,13 @@ export interface ConnectResult {
   durationMinutes: number;
   expiresAt: string;
   pricePaidDescription?: string;
+  /** Payment details for the receipt, attached client-side after settlement. */
+  payment?: {
+    amountUsd: number;
+    txHash?: string;
+    payer: string;
+    payee: string;
+  };
 }
 
 export interface SessionStatus {
@@ -103,7 +110,14 @@ async function payAndRetry(
     const err = await paid.json().catch(() => ({}));
     throw new Error(err.reason || err.error || `${route} verification failed: HTTP ${paid.status}`);
   }
-  return (await paid.json()) as ConnectResult;
+  const result = (await paid.json()) as ConnectResult;
+  result.payment = {
+    amountUsd: Number(a.amount),
+    txHash: txHashes[0],
+    payer: getOwner(),
+    payee: a.payTo,
+  };
+  return result;
 }
 
 /** Pay for and start a new VPN session. Returns the WireGuard params for the Rust tunnel. */

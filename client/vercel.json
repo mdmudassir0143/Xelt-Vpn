@@ -2,6 +2,7 @@
   "buildCommand": "npm run build:landing",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/", "destination": "/landing.html" }
+    { "source": "/", "destination": "/landing.html" },
+    { "source": "/xelt-receipt", "destination": "/xelt-receipt.html" }
   ]
 }

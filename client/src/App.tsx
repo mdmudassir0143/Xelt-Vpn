@@ -19,6 +19,7 @@ import {
   type SessionStatus,
   type ConnectResult,
 } from "./utils/vpnFlow";
+import { openReceipt } from "./utils/receipt";
 
 // ── Tauri tunnel contract (reused as-is; connect_paid is payment-agnostic) ──
 type VpnStatus = "disconnected" | "connecting" | "connected" | "disconnecting" | "error";
@@ -201,6 +202,7 @@ export default function App() {
       setBusy("bringing up tunnel…");
       await startTunnel(reg);
       setNotice(`Connected — ${minutes} min.`);
+      openReceipt(reg); // open the branded receipt in the system browser
       void refreshSession();
       void refreshBalance();
     } catch (e: any) {

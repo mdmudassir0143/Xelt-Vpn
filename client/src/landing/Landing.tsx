@@ -6,7 +6,7 @@ import { Features } from './components/Features';
 import { Stats } from './components/Stats';
 import { CodeShowcase } from './components/CodeShowcase';
 import { Waitlist } from './components/Waitlist';
-import { CTA, Footer } from './components/Closing';
+import { Footer } from './components/Closing';
 
 export function Landing() {
   return (

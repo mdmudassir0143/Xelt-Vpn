@@ -22,7 +22,10 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2020',
     rollupOptions: {
-      input: resolve(__dirname, 'landing.html'),
+      input: {
+        landing: resolve(__dirname, 'landing.html'),
+        receipt: resolve(__dirname, 'xelt-receipt.html'),
+      },
     },
   },
 });

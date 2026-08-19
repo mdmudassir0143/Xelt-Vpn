@@ -106,6 +106,22 @@ fn get_pubkey() -> Result<String, String> {
     vpn::get_pubkey_b64()
 }
 
+/// Open the Xelt receipt page in the system browser. Restricted to our own receipt URL
+/// (the app's localhost origin, or an https deploy) so the webview can't open arbitrary URLs.
+#[tauri::command]
+#[allow(deprecated)] // shell().open; the opener plugin is the newer API.
+async fn open_receipt(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    use tauri_plugin_shell::ShellExt;
+    let ok = url.contains("/xelt-receipt")
+        && (url.starts_with("http://localhost:")
+            || url.starts_with("http://127.0.0.1:")
+            || url.starts_with("https://"));
+    if !ok {
+        return Err("refused: not a receipt URL".into());
+    }
+    app.shell().open(&url, None).map_err(|e| e.to_string())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_localhost::Builder::new(1421).build())
@@ -148,6 +164,7 @@ pub fn run() {
             disconnect,
             get_status,
             get_pubkey,
+            open_receipt,
             check_sudo,
             api_health::get_x402_api_base,
             api_health::fetch_server_health,
